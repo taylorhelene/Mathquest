@@ -1,9 +1,8 @@
 "use client";
 
 /**
- * Interactive educational visual for every lesson.
- * Works with pure SVG/CSS — no GLB file required.
- * Optional modelSrc still enables model-viewer AR when a real .glb exists.
+ * Interactive diagrams for 3D shape lessons (SVG fallback).
+ * Real rotation/AR comes from model-viewer + .glb files.
  */
 
 type Props = {
@@ -11,358 +10,313 @@ type Props = {
   title: string;
   topic: string;
   modelSrc?: string;
+  shapeHint?: string;
 };
 
 export default function LessonVisual({
   lessonId,
   title,
-  topic,
   modelSrc,
+  shapeHint,
 }: Props) {
   return (
     <div className="lesson-visual">
-      <div className="visual-canvas" aria-label={`Interactive scene: ${title}`}>
-        {renderScene(lessonId, topic)}
+      <div className="visual-canvas" aria-label={`3D diagram: ${title}`}>
+        {renderScene(lessonId, shapeHint)}
       </div>
       <p className="scene-note">
-        Explore the picture above — tap or look at the highlighted parts.
-        {modelSrc
-          ? " On a supported phone you can also open the 3D model in AR below."
-          : ""}
+        Diagram preview of the solid. Use the <strong>3D model below</strong> to
+        rotate, zoom, and open AR on a supported phone.
+        {modelSrc ? ` Model file: ${modelSrc}` : ""}
       </p>
     </div>
   );
 }
 
-function renderScene(id: string, topic: string) {
+function renderScene(id: string, hint?: string) {
+  const key = hint || id;
+  if (key.includes("sphere") && !key.includes("hemi")) return <SphereDiagram />;
+  if (key.includes("hemi")) return <HemisphereDiagram />;
+  if (key.includes("cylinder")) return <CylinderDiagram />;
+  if (key.includes("cone")) return <ConeDiagram />;
+  if (key.includes("pyramid")) return <PyramidDiagram />;
+  if (key.includes("compass")) return <CompassDiagram />;
+  if (key.includes("cuboid")) return <CuboidDiagram />;
+  if (key.includes("cube") || key.includes("volume") || key.includes("surface") || key.includes("edges"))
+    return <CubeDiagram />;
   switch (id) {
-    case "fractions-halves":
-      return <FractionPizza slices={2} highlight={1} label="1/2" />;
-    case "fractions-quarters":
-      return <FractionPizza slices={4} highlight={1} label="1/4" />;
-    case "fractions-compare":
-      return <CompareBars />;
-    case "fractions-add-same":
-      return <FractionPizza slices={7} highlight={5} label="5/7" />;
-    case "geometry-shapes":
-      return <ShapesScene />;
-    case "geometry-perimeter":
-      return <RectScene mode="perimeter" />;
-    case "geometry-area":
-      return <RectScene mode="area" />;
-    case "geometry-angles":
-      return <AnglesScene />;
-    case "decimals-tenths":
-      return <NumberLine value={0.7} />;
-    case "percentages-basics":
-    case "percentages-increase":
-      return <PercentBar percent={50} />;
-    case "ratios-simplify":
-      return <RatioCounters red={2} blue={3} />;
+    case "3d-sphere":
+    case "3d-sphere-radius":
+      return <SphereDiagram />;
+    case "3d-cylinder":
+      return <CylinderDiagram />;
+    case "3d-cone":
+      return <ConeDiagram />;
+    case "3d-pyramid":
+      return <PyramidDiagram />;
+    case "3d-compass":
+      return <CompassDiagram />;
+    case "3d-hemisphere":
+      return <HemisphereDiagram />;
+    case "3d-cuboid":
+      return <CuboidDiagram />;
     default:
-      return topic === "fractions" ? (
-        <FractionPizza slices={4} highlight={1} label="?" />
-      ) : (
-        <ShapesScene />
-      );
+      return <CubeDiagram />;
   }
 }
 
-function FractionPizza({
-  slices,
-  highlight,
-  label,
-}: {
-  slices: number;
-  highlight: number;
-  label: string;
-}) {
-  const r = 90;
-  const cx = 120;
-  const cy = 110;
-  const paths = [];
-  for (let i = 0; i < slices; i++) {
-    const a0 = (i / slices) * Math.PI * 2 - Math.PI / 2;
-    const a1 = ((i + 1) / slices) * Math.PI * 2 - Math.PI / 2;
-    const x0 = cx + r * Math.cos(a0);
-    const y0 = cy + r * Math.sin(a0);
-    const x1 = cx + r * Math.cos(a1);
-    const y1 = cy + r * Math.sin(a1);
-    const large = slices === 2 ? 1 : 0;
-    const d = `M ${cx} ${cy} L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
-    paths.push(
-      <path
-        key={i}
-        d={d}
-        fill={i < highlight ? "var(--viz-hot)" : "var(--viz-cool)"}
+function CubeDiagram() {
+  return (
+    <svg viewBox="0 0 240 200" className="viz-svg">
+      {/* back face */}
+      <polygon
+        points="70,50 150,50 150,130 70,130"
+        fill="var(--viz-cool)"
+        opacity="0.5"
+        stroke="var(--viz-stroke)"
+      />
+      {/* top */}
+      <polygon
+        points="70,50 100,30 180,30 150,50"
+        fill="var(--viz-hot)"
+        opacity="0.85"
+        stroke="var(--viz-stroke)"
+      />
+      {/* side */}
+      <polygon
+        points="150,50 180,30 180,110 150,130"
+        fill="#a78bfa"
+        opacity="0.75"
+        stroke="var(--viz-stroke)"
+      />
+      <text x="120" y="175" textAnchor="middle" className="viz-label" fontSize="14" fontWeight="700">
+        Cube — 6 faces · 12 edges · 8 corners
+      </text>
+    </svg>
+  );
+}
+
+function CuboidDiagram() {
+  return (
+    <svg viewBox="0 0 260 200" className="viz-svg">
+      <polygon
+        points="40,60 160,60 160,140 40,140"
+        fill="var(--viz-cool)"
+        opacity="0.5"
+        stroke="var(--viz-stroke)"
+      />
+      <polygon
+        points="40,60 70,35 190,35 160,60"
+        fill="var(--viz-hot)"
+        opacity="0.85"
+        stroke="var(--viz-stroke)"
+      />
+      <polygon
+        points="160,60 190,35 190,115 160,140"
+        fill="#a78bfa"
+        opacity="0.75"
+        stroke="var(--viz-stroke)"
+      />
+      <text x="130" y="175" textAnchor="middle" className="viz-label" fontSize="14" fontWeight="700">
+        Cuboid — rectangular box
+      </text>
+    </svg>
+  );
+}
+
+function SphereDiagram() {
+  return (
+    <svg viewBox="0 0 220 200" className="viz-svg">
+      <defs>
+        <radialGradient id="sph" cx="40%" cy="35%">
+          <stop offset="0%" stopColor="#7dd3fc" />
+          <stop offset="100%" stopColor="#0284c7" />
+        </radialGradient>
+      </defs>
+      <circle
+        cx="110"
+        cy="90"
+        r="60"
+        fill="url(#sph)"
         stroke="var(--viz-stroke)"
         strokeWidth="2"
-      />,
-    );
-  }
-  return (
-    <svg viewBox="0 0 240 220" className="viz-svg">
-      {paths}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={r}
+      />
+      <ellipse
+        cx="110"
+        cy="90"
+        rx="60"
+        ry="18"
         fill="none"
         stroke="var(--viz-stroke)"
-        strokeWidth="3"
+        strokeWidth="1.5"
+        opacity="0.6"
       />
-      <text
-        x={cx}
-        y={cy + 6}
-        textAnchor="middle"
-        className="viz-label"
-        fontSize="22"
-        fontWeight="700"
-      >
-        {label}
-      </text>
-    </svg>
-  );
-}
-
-function CompareBars() {
-  return (
-    <svg viewBox="0 0 280 160" className="viz-svg">
-      <text x="20" y="28" className="viz-label" fontSize="14">
-        1/2
-      </text>
-      <rect
-        x="60"
-        y="12"
-        width="160"
-        height="28"
-        rx="6"
-        fill="var(--viz-hot)"
-      />
-      <text x="20" y="78" className="viz-label" fontSize="14">
-        1/4
-      </text>
-      <rect
-        x="60"
-        y="62"
-        width="80"
-        height="28"
-        rx="6"
-        fill="var(--viz-cool)"
-      />
-      <text x="60" y="120" className="viz-label" fontSize="15" fontWeight="600">
-        1/2 is larger than 1/4
-      </text>
-    </svg>
-  );
-}
-
-function ShapesScene() {
-  return (
-    <svg viewBox="0 0 320 180" className="viz-svg">
-      <polygon
-        points="50,140 90,50 130,140"
-        fill="var(--viz-hot)"
-        stroke="var(--viz-stroke)"
-      />
-      <text x="90" y="165" textAnchor="middle" className="viz-label" fontSize="12">
-        Triangle
-      </text>
-      <rect
-        x="150"
-        y="60"
-        width="70"
-        height="70"
-        fill="var(--viz-cool)"
-        stroke="var(--viz-stroke)"
-      />
-      <text x="185" y="165" textAnchor="middle" className="viz-label" fontSize="12">
-        Square
-      </text>
-      <circle
-        cx="270"
-        cy="95"
-        r="40"
-        fill="#a78bfa"
-        stroke="var(--viz-stroke)"
-      />
-      <text x="270" y="165" textAnchor="middle" className="viz-label" fontSize="12">
-        Circle
-      </text>
-    </svg>
-  );
-}
-
-function RectScene({ mode }: { mode: "perimeter" | "area" }) {
-  return (
-    <svg viewBox="0 0 280 180" className="viz-svg">
-      <rect
-        x="40"
-        y="40"
-        width="180"
-        height="90"
-        fill={mode === "area" ? "var(--viz-hot)" : "transparent"}
-        stroke="var(--viz-stroke)"
-        strokeWidth="4"
-      />
-      <text x="130" y="30" textAnchor="middle" className="viz-label" fontSize="13">
-        length = 6
-      </text>
-      <text
-        x="230"
-        y="90"
-        textAnchor="start"
-        className="viz-label"
-        fontSize="13"
-      >
-        width = 4
-      </text>
-      <text x="130" y="165" textAnchor="middle" className="viz-label" fontSize="14" fontWeight="600">
-        {mode === "perimeter"
-          ? "Perimeter = 2 × (6 + 4) = 20"
-          : "Area = 6 × 4 = 24"}
-      </text>
-    </svg>
-  );
-}
-
-function AnglesScene() {
-  return (
-    <svg viewBox="0 0 300 160" className="viz-svg">
-      {/* right angle */}
-      <path
-        d="M 40 120 L 40 50 L 110 50"
-        fill="none"
-        stroke="var(--viz-hot)"
-        strokeWidth="4"
-      />
-      <rect x="40" y="50" width="14" height="14" fill="none" stroke="var(--viz-hot)" />
-      <text x="55" y="140" className="viz-label" fontSize="12">
-        Right 90°
-      </text>
-      {/* acute */}
-      <path
-        d="M 150 120 L 150 50 L 200 100"
-        fill="none"
-        stroke="var(--viz-cool)"
-        strokeWidth="4"
-      />
-      <text x="155" y="140" className="viz-label" fontSize="12">
-        Acute
-      </text>
-      {/* obtuse */}
-      <path
-        d="M 230 120 L 230 50 L 280 90"
-        fill="none"
-        stroke="#a78bfa"
-        strokeWidth="4"
-      />
-      <text x="235" y="140" className="viz-label" fontSize="12">
-        Obtuse
-      </text>
-    </svg>
-  );
-}
-
-function NumberLine({ value }: { value: number }) {
-  const x = 30 + value * 200;
-  return (
-    <svg viewBox="0 0 260 100" className="viz-svg">
       <line
-        x1="30"
-        y1="50"
-        x2="230"
-        y2="50"
+        x1="110"
+        y1="90"
+        x2="160"
+        y2="60"
+        stroke="var(--viz-hot)"
+        strokeWidth="2"
+      />
+      <text x="155" y="55" className="viz-label" fontSize="12">
+        radius
+      </text>
+      <text x="110" y="175" textAnchor="middle" className="viz-label" fontSize="14" fontWeight="700">
+        Sphere — no faces or edges
+      </text>
+    </svg>
+  );
+}
+
+function HemisphereDiagram() {
+  return (
+    <svg viewBox="0 0 220 180" className="viz-svg">
+      <path
+        d="M 40 100 A 70 70 0 0 1 180 100 L 40 100"
+        fill="var(--viz-cool)"
+        stroke="var(--viz-stroke)"
+        strokeWidth="2"
+      />
+      <ellipse
+        cx="110"
+        cy="100"
+        rx="70"
+        ry="16"
+        fill="var(--viz-hot)"
+        opacity="0.7"
+        stroke="var(--viz-stroke)"
+      />
+      <text x="110" y="155" textAnchor="middle" className="viz-label" fontSize="14" fontWeight="700">
+        Hemisphere — half a sphere
+      </text>
+    </svg>
+  );
+}
+
+function CylinderDiagram() {
+  return (
+    <svg viewBox="0 0 200 200" className="viz-svg">
+      <ellipse
+        cx="100"
+        cy="45"
+        rx="50"
+        ry="16"
+        fill="var(--viz-hot)"
+        stroke="var(--viz-stroke)"
+      />
+      <rect
+        x="50"
+        y="45"
+        width="100"
+        height="90"
+        fill="var(--viz-cool)"
+        opacity="0.7"
+      />
+      <ellipse
+        cx="100"
+        cy="135"
+        rx="50"
+        ry="16"
+        fill="#38bdf8"
+        stroke="var(--viz-stroke)"
+      />
+      <line x1="50" y1="45" x2="50" y2="135" stroke="var(--viz-stroke)" />
+      <line x1="150" y1="45" x2="150" y2="135" stroke="var(--viz-stroke)" />
+      <text x="100" y="175" textAnchor="middle" className="viz-label" fontSize="14" fontWeight="700">
+        Cylinder — 2 circular faces
+      </text>
+    </svg>
+  );
+}
+
+function ConeDiagram() {
+  return (
+    <svg viewBox="0 0 200 200" className="viz-svg">
+      <polygon
+        points="100,30 40,140 160,140"
+        fill="var(--viz-cool)"
+        opacity="0.75"
+        stroke="var(--viz-stroke)"
+        strokeWidth="2"
+      />
+      <ellipse
+        cx="100"
+        cy="140"
+        rx="60"
+        ry="16"
+        fill="var(--viz-hot)"
+        opacity="0.8"
+        stroke="var(--viz-stroke)"
+      />
+      <circle cx="100" cy="30" r="4" fill="var(--viz-stroke)" />
+      <text x="115" y="28" className="viz-label" fontSize="12">
+        apex
+      </text>
+      <text x="100" y="175" textAnchor="middle" className="viz-label" fontSize="14" fontWeight="700">
+        Cone — tip + circular base
+      </text>
+    </svg>
+  );
+}
+
+function PyramidDiagram() {
+  return (
+    <svg viewBox="0 0 220 200" className="viz-svg">
+      <polygon
+        points="110,25 40,150 180,150"
+        fill="var(--viz-cool)"
+        opacity="0.6"
+        stroke="var(--viz-stroke)"
+        strokeWidth="2"
+      />
+      <polygon
+        points="110,25 180,150 200,120 110,25"
+        fill="var(--viz-hot)"
+        opacity="0.75"
+        stroke="var(--viz-stroke)"
+      />
+      <polygon
+        points="40,150 70,130 200,120 180,150"
+        fill="#a78bfa"
+        opacity="0.5"
+        stroke="var(--viz-stroke)"
+      />
+      <text x="110" y="180" textAnchor="middle" className="viz-label" fontSize="14" fontWeight="700">
+        Square pyramid — 5 faces
+      </text>
+    </svg>
+  );
+}
+
+function CompassDiagram() {
+  return (
+    <svg viewBox="0 0 220 220" className="viz-svg">
+      <circle
+        cx="110"
+        cy="110"
+        r="75"
+        fill="var(--surface-2)"
         stroke="var(--viz-stroke)"
         strokeWidth="3"
       />
-      {[0, 0.5, 1].map((t) => (
-        <g key={t}>
-          <line
-            x1={30 + t * 200}
-            y1="42"
-            x2={30 + t * 200}
-            y2="58"
-            stroke="var(--viz-stroke)"
-            strokeWidth="2"
-          />
-          <text
-            x={30 + t * 200}
-            y="78"
-            textAnchor="middle"
-            className="viz-label"
-            fontSize="12"
-          >
-            {t}
-          </text>
-        </g>
-      ))}
-      <circle cx={x} cy="50" r="10" fill="var(--viz-hot)" />
-      <text x={x} y="28" textAnchor="middle" className="viz-label" fontSize="14" fontWeight="700">
-        {value}
+      <circle cx="110" cy="110" r="8" fill="var(--viz-hot)" />
+      {/* N needle */}
+      <polygon points="110,40 100,110 120,110" fill="#ef4444" />
+      <polygon points="110,180 100,110 120,110" fill="#94a3b8" />
+      <polygon points="40,110 110,100 110,120" fill="#64748b" />
+      <polygon points="180,110 110,100 110,120" fill="#64748b" />
+      <text x="110" y="32" textAnchor="middle" className="viz-label" fontSize="16" fontWeight="700" fill="#ef4444">
+        N
       </text>
-    </svg>
-  );
-}
-
-function PercentBar({ percent }: { percent: number }) {
-  return (
-    <svg viewBox="0 0 280 100" className="viz-svg">
-      <rect
-        x="20"
-        y="30"
-        width="240"
-        height="36"
-        rx="8"
-        fill="var(--viz-cool)"
-      />
-      <rect
-        x="20"
-        y="30"
-        width={(percent / 100) * 240}
-        height="36"
-        rx="8"
-        fill="var(--viz-hot)"
-      />
-      <text x="140" y="54" textAnchor="middle" className="viz-label" fontSize="16" fontWeight="700">
-        {percent}%
+      <text x="110" y="205" textAnchor="middle" className="viz-label" fontSize="14" fontWeight="700">
+        S
       </text>
-      <text x="140" y="88" textAnchor="middle" className="viz-label" fontSize="13">
-        {percent} out of 100
+      <text x="22" y="115" className="viz-label" fontSize="14" fontWeight="700">
+        W
       </text>
-    </svg>
-  );
-}
-
-function RatioCounters({ red, blue }: { red: number; blue: number }) {
-  const dots = [];
-  for (let i = 0; i < red; i++) {
-    dots.push(
-      <circle
-        key={`r${i}`}
-        cx={40 + i * 36}
-        cy={50}
-        r="14"
-        fill="var(--viz-hot)"
-      />,
-    );
-  }
-  for (let i = 0; i < blue; i++) {
-    dots.push(
-      <circle
-        key={`b${i}`}
-        cx={40 + i * 36}
-        cy={100}
-        r="14"
-        fill="var(--viz-cool)"
-      />,
-    );
-  }
-  return (
-    <svg viewBox="0 0 220 140" className="viz-svg">
-      {dots}
-      <text x="110" y="130" textAnchor="middle" className="viz-label" fontSize="15" fontWeight="600">
-        {red}:{blue}
+      <text x="188" y="115" className="viz-label" fontSize="14" fontWeight="700">
+        E
       </text>
     </svg>
   );

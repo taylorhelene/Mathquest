@@ -14,258 +14,284 @@ export type Lesson = {
   free: boolean;
   summary: string;
   content: string;
-  /** Optional 3D model path (local /models/... or public CDN .glb) for AR */
+  /** 3D model under public/models/ — drag to rotate, AR on supported phones */
   modelSrc?: string;
   iosModelSrc?: string;
+  /** Attribution shown under the 3D viewer (author + license) */
+  modelCredit?: string;
+  /** Hint for the on-screen 3D diagram */
+  shapeHint?: "cube" | "sphere" | "cylinder" | "cone" | "compass" | "pyramid" | "cuboid" | "hemisphere";
   question: Question;
 };
 
-/** Shared public sample models (modelviewer.dev) so AR works without local files */
-const SAMPLE_GLB =
-  "https://modelviewer.dev/shared-assets/models/Astronaut.glb";
-const SAMPLE_SPHERE =
-  "https://modelviewer.dev/shared-assets/models/reflective-sphere.gltf";
-
+/**
+ * Place matching .glb files in public/models/
+ * e.g. public/models/cube.glb → modelSrc: "/models/cube.glb"
+ * Edit modelCredit on each lesson to the real author + license from your download page.
+ */
 export const LESSONS: Lesson[] = [
   {
-    id: "fractions-halves",
+    id: "3d-cube",
     number: 1,
-    title: "Halves of a Whole",
-    topic: "fractions",
+    title: "Meet the Cube",
+    topic: "geometry",
     free: true,
-    summary: "Understand what one-half means using everyday objects.",
+    summary: "Explore a cube in 3D — faces, edges and corners.",
     content:
-      "A whole can be split into two equal parts. Each equal part is called one-half, written as 1/2. " +
-      "If you share a pizza equally with a friend, each of you gets 1/2 of the pizza. " +
-      "The bottom number (denominator) tells how many equal parts the whole is divided into. " +
-      "The top number (numerator) tells how many of those parts you have.",
-    modelSrc: SAMPLE_SPHERE,
+      "A cube is a solid shape with 6 square faces, 12 edges and 8 corners (vertices). " +
+      "Every face is the same size. Dice, boxes and ice cubes are everyday cubes. " +
+      "Rotate the 3D model to count the faces yourself — you should always see at most 3 faces at once from one view.",
+    modelSrc: "/models/cube.glb",
+    modelCredit: "3d lattice (https://skfb.ly/IUz7) by dansmath is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/). ",
+    shapeHint: "cube",
     question: {
       id: "q1",
-      prompt:
-        "A chocolate bar is broken into 2 equal pieces. What fraction is one piece?",
-      options: ["1/4", "1/2", "2/2", "1/3"],
+      prompt: "How many faces does a cube have?",
+      options: ["4", "6", "8", "12"],
       correctIndex: 1,
-      explanation:
-        "Two equal pieces means each piece is one-half of the whole bar: 1/2.",
+      explanation: "A cube has 6 square faces — like the six sides of a die.",
     },
   },
   {
-    id: "fractions-quarters",
+    id: "3d-sphere",
     number: 2,
-    title: "Quarters and Fourths",
-    topic: "fractions",
+    title: "Spheres and Balls",
+    topic: "geometry",
     free: true,
-    summary: "Divide a whole into four equal parts and name them.",
+    summary: "A sphere is perfectly round in every direction.",
     content:
-      "When a whole is divided into four equal parts, each part is one-quarter (or one-fourth), written 1/4. " +
-      "Two quarters make one-half: 2/4 = 1/2. Three quarters is 3/4. " +
-      "Look around: a sandwich cut into four triangles, a clock face into four quarters of an hour.",
-    modelSrc: SAMPLE_SPHERE,
+      "A sphere is a 3D shape where every point on the surface is the same distance from the centre. " +
+      "Footballs, globes and bubbles are nearly spheres. A sphere has no faces, edges or corners — only a curved surface. " +
+      "Spin the model to see that it looks circular from every angle.",
+    modelSrc: "/models/sphere.glb",
+    modelCredit: "Riemann Sphere (https://skfb.ly/oA6xR) by Rosedale is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+    shapeHint: "sphere",
     question: {
       id: "q2",
-      prompt: "Which fraction is the same as one-half?",
-      options: ["1/4", "2/4", "3/4", "4/4"],
-      correctIndex: 1,
-      explanation:
-        "2/4 means two out of four equal parts, which is the same as half of the whole.",
+      prompt: "How many flat faces does a sphere have?",
+      options: ["0", "1", "2", "6"],
+      correctIndex: 0,
+      explanation: "A sphere has no flat faces — only one continuous curved surface.",
     },
   },
   {
-    id: "fractions-compare",
+    id: "3d-cuboid",
     number: 3,
-    title: "Comparing Simple Fractions",
-    topic: "fractions",
+    title: "Cuboids (Rectangular Boxes)",
+    topic: "geometry",
     free: true,
-    summary:
-      "Decide which fraction is larger when denominators match or are simple.",
+    summary: "A box shape with 6 rectangular faces.",
     content:
-      "When two fractions have the same denominator, the one with the larger numerator is bigger. " +
-      "So 3/5 is greater than 2/5. When denominators differ, try to picture the parts or find a common whole. " +
-      "1/2 is larger than 1/3 because halves are bigger pieces than thirds of the same whole.",
-    modelSrc: SAMPLE_SPHERE,
+      "A cuboid (rectangular prism) has 6 faces that are rectangles, 12 edges and 8 vertices. " +
+      "Unlike a cube, the faces are not all the same size — length, width and height can differ. " +
+      "Books, rooms and many cartons are cuboids. Rotate the model and compare the three different face sizes.",
+    modelSrc: "/models/cuboid.glb",
+    modelCredit: "Cube Outline (https://skfb.ly/6BXO7) by robinhuse is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+    shapeHint: "cuboid",
     question: {
       id: "q3",
-      prompt: "Which is larger: 1/2 or 1/4?",
-      options: ["1/4", "They are equal", "1/2", "Cannot tell"],
+      prompt: "How many edges does a cuboid have?",
+      options: ["6", "8", "12", "16"],
       correctIndex: 2,
-      explanation:
-        "Halves are larger pieces than quarters of the same whole, so 1/2 > 1/4.",
+      explanation: "Like a cube, a cuboid has 12 edges.",
     },
   },
   {
-    id: "geometry-shapes",
+    id: "3d-cylinder",
     number: 4,
-    title: "Basic 2D Shapes",
+    title: "Cylinders",
     topic: "geometry",
     free: true,
-    summary: "Name triangles, rectangles, squares and circles by their properties.",
+    summary: "Two circular ends and a curved side — like a can.",
     content:
-      "A triangle has 3 sides. A rectangle has 4 sides with opposite sides equal and four right angles. " +
-      "A square is a special rectangle where all sides are equal. A circle is a perfectly round shape with every point the same distance from the centre.",
-    modelSrc: SAMPLE_GLB,
+      "A cylinder has 2 flat circular faces and 1 curved surface. It has 2 curved edges (the rims) and no corners. " +
+      "Tins, pipes and batteries are cylinders. Turn the 3D model to see the circles on top and bottom and the curved wall between them.",
+    modelSrc: "/models/cylinder.glb",
+    modelCredit: "Cylinder Transparent Artistic Reference (https://skfb.ly/onOWN) by dgscott922 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+    shapeHint: "cylinder",
     question: {
       id: "q4",
-      prompt: "How many sides does a triangle have?",
-      options: ["2", "3", "4", "5"],
-      correctIndex: 1,
-      explanation: "By definition a triangle has exactly three sides.",
+      prompt: "How many flat faces does a cylinder have?",
+      options: ["0", "1", "2", "3"],
+      correctIndex: 2,
+      explanation: "A cylinder has 2 flat circular faces (top and bottom).",
     },
   },
   {
-    id: "geometry-perimeter",
+    id: "3d-cone",
     number: 5,
-    title: "Perimeter of Rectangles",
+    title: "Cones",
     topic: "geometry",
     free: true,
-    summary: "Find the distance around a rectangle.",
+    summary: "A circular base that tapers to a point.",
     content:
-      "Perimeter is the total length around a shape. For a rectangle, add the lengths of all four sides: " +
-      "Perimeter = 2 × (length + width). Example: a garden 5 m long and 3 m wide has perimeter 2 × (5 + 3) = 16 m.",
-    modelSrc: SAMPLE_GLB,
+      "A cone has 1 flat circular face, 1 curved surface, 1 curved edge and 1 vertex (the apex). " +
+      "Ice-cream cones, party hats and traffic cones are real-life examples. " +
+      "Rotate the model and find the sharp tip and the round base.",
+    modelSrc: "/models/cone.glb",
+    modelCredit: "Cone Transparent Artistic Reference (https://skfb.ly/onOXw) by dgscott922 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+    shapeHint: "cone",
     question: {
       id: "q5",
-      prompt: "A rectangle is 6 cm long and 4 cm wide. What is its perimeter?",
-      options: ["10 cm", "20 cm", "24 cm", "12 cm"],
+      prompt: "How many vertices (corners) does a cone have?",
+      options: ["0", "1", "2", "3"],
       correctIndex: 1,
-      explanation: "2 × (6 + 4) = 2 × 10 = 20 cm.",
+      explanation: "A cone has one vertex — the apex at the tip.",
     },
   },
   {
-    id: "geometry-area",
+    id: "3d-pyramid",
     number: 6,
-    title: "Area of Rectangles",
+    title: "Pyramids",
     topic: "geometry",
     free: true,
-    summary: "Measure the space inside a rectangle.",
+    summary: "A base with triangular faces meeting at a point.",
     content:
-      "Area measures the space inside a shape. For a rectangle: Area = length × width. " +
-      "Units are square units (cm², m²). A floor 4 m by 3 m has area 12 m².",
-    modelSrc: SAMPLE_GLB,
+      "A square-based pyramid has 5 faces (1 square + 4 triangles), 8 edges and 5 vertices. " +
+      "The famous pyramids of Egypt are this kind of shape. " +
+      "Use the 3D model to count the triangular sides rising to the top point.",
+    modelSrc: "/models/pyramid.glb",
+    modelCredit: "copper meditation pyramid (https://skfb.ly/oDQFX) by shirlanne is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+    shapeHint: "pyramid",
     question: {
       id: "q6",
-      prompt: "What is the area of a rectangle 5 m long and 3 m wide?",
-      options: ["8 m²", "15 m²", "16 m²", "10 m²"],
-      correctIndex: 1,
-      explanation: "Area = length × width = 5 × 3 = 15 m².",
+      prompt: "A square-based pyramid has how many faces in total?",
+      options: ["3", "4", "5", "6"],
+      correctIndex: 2,
+      explanation: "1 square base + 4 triangular faces = 5 faces.",
     },
   },
   {
-    id: "decimals-tenths",
+    id: "3d-compass",
     number: 7,
-    title: "Tenths and Hundredths",
-    topic: "decimals",
+    title: "Compass and Directions",
+    topic: "geometry",
     free: true,
-    summary: "Read and write numbers with one or two decimal places.",
+    summary: "Use a compass rose to name North, East, South and West.",
     content:
-      "The first digit after the decimal point is tenths (1/10). The second is hundredths (1/100). " +
-      "0.3 means three tenths. 0.25 means two tenths and five hundredths, or 25 hundredths. " +
-      "Money uses two decimal places: KES 12.50 means 12 shillings and 50 cents.",
-    modelSrc: SAMPLE_SPHERE,
+      "A compass helps us find direction. The four main (cardinal) points are North (N), East (E), South (S) and West (W). " +
+      "Turning a quarter-turn clockwise from North faces East. A full turn is 360°. " +
+      "Spin the 3D compass model and practise reading the directions.",
+    modelSrc: "/models/compass.glb",
+    modelCredit: "Compass_Rose (https://skfb.ly/oDooW) by Kateryna is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+    shapeHint: "compass",
     question: {
       id: "q7",
-      prompt: "What does 0.7 mean?",
-      options: ["7 wholes", "7 tenths", "7 hundredths", "7 thousandths"],
-      correctIndex: 1,
-      explanation: "The first place after the decimal is tenths, so 0.7 = 7/10.",
+      prompt: "If you face North and turn a quarter-turn clockwise, which way do you face?",
+      options: ["South", "West", "East", "North"],
+      correctIndex: 2,
+      explanation: "A quarter-turn clockwise from North is East.",
     },
   },
   {
-    id: "percentages-basics",
+    id: "3d-hemisphere",
     number: 8,
-    title: "What is a Percentage?",
-    topic: "percentages",
+    title: "Hemispheres",
+    topic: "geometry",
     free: true,
-    summary: "Understand percent as parts out of 100.",
+    summary: "Half of a sphere — like a dome or bowl.",
     content:
-      "Percent means “out of 100”. 50% is 50 out of 100, which equals 1/2. " +
-      "25% = 1/4. 10% of 80 is 8. To find a percentage of a number, multiply by the percent and divide by 100.",
-    modelSrc: SAMPLE_SPHERE,
+      "A hemisphere is half a sphere. It has 1 flat circular face and 1 curved surface. " +
+      "Domes, bowls and the Northern or Southern Hemisphere of Earth are examples. " +
+      "Inspect the model: one side is flat, the other is rounded.",
+    modelSrc: "/models/hemisphere.glb",
+    modelCredit: "Hemisphere (https://skfb.ly/67xNy) by artwork guide is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+    shapeHint: "hemisphere",
     question: {
       id: "q8",
-      prompt: "What is 50% of 40?",
-      options: ["10", "20", "25", "30"],
+      prompt: "How many flat faces does a hemisphere have?",
+      options: ["0", "1", "2", "3"],
       correctIndex: 1,
-      explanation: "50% is half, so half of 40 is 20.",
+      explanation: "A hemisphere has one flat circular face where the sphere was cut.",
     },
   },
   {
-    id: "ratios-simplify",
+    id: "3d-edges-vertices",
     number: 9,
-    title: "Simple Ratios",
-    topic: "ratios",
+    title: "Edges and Vertices",
+    topic: "geometry",
     free: true,
-    summary: "Compare quantities using ratios.",
+    summary: "Count edges and corners on solid shapes.",
     content:
-      "A ratio compares two quantities. If there are 2 red counters and 3 blue, the ratio of red to blue is 2:3. " +
-      "Ratios can be simplified like fractions: 4:6 simplifies to 2:3 by dividing both parts by 2.",
-    modelSrc: SAMPLE_GLB,
+      "An edge is where two faces meet. A vertex (corner) is where edges meet. " +
+      "Cube: 12 edges, 8 vertices. Square pyramid: 8 edges, 5 vertices. Sphere: 0 edges, 0 vertices. " +
+      "Rotate each model and count carefully — edges are the straight lines, vertices are the points.",
+    modelSrc: "/models/vertices.glb",
+    modelCredit: "Hesse Model for divisors of 30 (https://skfb.ly/6WBRE) by Griffin is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+    shapeHint: "cube",
     question: {
       id: "q9",
-      prompt: "Simplify the ratio 4:6.",
-      options: ["4:6", "2:3", "1:2", "3:2"],
-      correctIndex: 1,
-      explanation:
-        "Divide both numbers by 2: 4÷2 = 2 and 6÷2 = 3, so 2:3.",
+      prompt: "How many vertices does a cube have?",
+      options: ["4", "6", "8", "12"],
+      correctIndex: 2,
+      explanation: "A cube has 8 corners (vertices).",
     },
   },
   {
-    id: "fractions-add-same",
+    id: "3d-volume-cube",
     number: 10,
-    title: "Adding Fractions (Same Denominator)",
-    topic: "fractions",
+    title: "Volume of a Cube",
+    topic: "geometry",
     free: true,
-    summary: "Add fractions that share the same bottom number.",
+    summary: "Measure the space inside a cube.",
     content:
-      "When denominators are the same, add the numerators and keep the denominator. " +
-      "1/5 + 2/5 = 3/5. Always check if the answer can be simplified. " +
-      "3/6 + 1/6 = 4/6 = 2/3.",
-    modelSrc: SAMPLE_SPHERE,
+      "Volume is the space inside a 3D shape. For a cube with side length a: Volume = a × a × a = a³. " +
+      "If each edge is 3 cm, volume = 3 × 3 × 3 = 27 cm³. " +
+      "Look at the cube model and imagine filling it with 1 cm unit cubes.",
+    modelSrc: "/models/volume.glb",
+    modelCredit: "Stereometry (https://skfb.ly/oXsWL) by arloopa is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+    shapeHint: "cube",
     question: {
       id: "q10",
-      prompt: "What is 2/7 + 3/7?",
-      options: ["5/14", "5/7", "6/7", "1/7"],
-      correctIndex: 1,
-      explanation:
-        "Same denominator: add numerators 2 + 3 = 5, keep 7 → 5/7.",
+      prompt: "A cube has side length 2 m. What is its volume?",
+      options: ["4 m³", "6 m³", "8 m³", "12 m³"],
+      correctIndex: 2,
+      explanation: "Volume = 2 × 2 × 2 = 8 m³.",
     },
   },
+  // Paid
   {
-    id: "geometry-angles",
+    id: "3d-surface-area",
     number: 11,
-    title: "Types of Angles",
+    title: "Surface Area of a Cube",
     topic: "geometry",
     free: false,
-    summary: "Identify acute, right, obtuse and straight angles.",
+    summary: "Find the total area of all six faces.",
     content:
-      "An acute angle is less than 90°. A right angle is exactly 90°. " +
-      "An obtuse angle is greater than 90° but less than 180°. A straight angle is 180°.",
-    modelSrc: SAMPLE_GLB,
+      "Surface area is the total area of all outer faces. For a cube with side a: Surface area = 6 × a². " +
+      "If a = 4 cm, each face is 16 cm² and total surface area is 6 × 16 = 96 cm². " +
+      "Rotate the model and picture unfolding all six squares into a net.",
+    modelSrc: "/models/volume.glb",
+    modelCredit: "Stereometry (https://skfb.ly/oXsWL) by arloopa is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+    shapeHint: "cube",
     question: {
       id: "q11",
-      prompt: "An angle of 90° is called a…",
-      options: ["Acute angle", "Right angle", "Obtuse angle", "Straight angle"],
-      correctIndex: 1,
-      explanation: "Exactly 90° is a right angle.",
+      prompt: "A cube has side 3 cm. What is its surface area?",
+      options: ["9 cm²", "27 cm²", "54 cm²", "36 cm²"],
+      correctIndex: 2,
+      explanation: "6 × (3 × 3) = 6 × 9 = 54 cm².",
     },
   },
   {
-    id: "percentages-increase",
+    id: "3d-sphere-radius",
     number: 12,
-    title: "Percentage Increase",
-    topic: "percentages",
+    title: "Sphere: Centre and Radius",
+    topic: "geometry",
     free: false,
-    summary: "Calculate how much a value grows by a given percent.",
+    summary: "Every point on a sphere is the same distance from the centre.",
     content:
-      "To increase a number by a percentage: new value = original × (1 + percent/100). " +
-      "A price of KES 200 increased by 10% becomes 200 × 1.10 = KES 220.",
-    modelSrc: SAMPLE_SPHERE,
+      "The radius of a sphere is the distance from the centre to any point on the surface. " +
+      "The diameter is twice the radius and passes through the centre. " +
+      "Spin the sphere model and imagine a line from the middle to the outside — that length is the radius.",
+    modelSrc: "/models/sphere.glb",
+    modelCredit: "Sphere 3D model — replace with author name & license",
+    shapeHint: "sphere",
     question: {
       id: "q12",
-      prompt: "Increase 50 by 20%. What is the new value?",
-      options: ["60", "70", "10", "40"],
-      correctIndex: 0,
-      explanation: "50 × 1.20 = 60.",
+      prompt: "If a sphere’s radius is 5 cm, what is its diameter?",
+      options: ["5 cm", "10 cm", "15 cm", "25 cm"],
+      correctIndex: 1,
+      explanation: "Diameter = 2 × radius = 2 × 5 = 10 cm.",
     },
   },
 ];

@@ -28,15 +28,17 @@ type ARViewerProps = {
   title: string;
   modelSrc: string;
   iosModelSrc?: string;
+  /** Author / license line shown under the viewer */
+  modelCredit?: string;
 };
 
 export default function ARViewer({
   title,
   modelSrc,
   iosModelSrc,
+  modelCredit,
 }: ARViewerProps) {
   useEffect(() => {
-    // Load model-viewer from CDN once
     if (!customElements.get("model-viewer")) {
       const script = document.createElement("script");
       script.type = "module";
@@ -61,7 +63,8 @@ export default function ARViewer({
         style={{
           width: "100%",
           height: "280px",
-          background: "var(--surface-2)",
+          /* Always dark — not tied to site light/dark toggle */
+          background: "#0f1419",
           borderRadius: "12px",
         }}
       >
@@ -73,6 +76,11 @@ export default function ARViewer({
         Rotate the model here, or use “View in your space” on a supported phone.
         On other devices the interactive 3D view still works.
       </p>
+      {modelCredit ? (
+        <p className="model-credit" role="contentinfo">
+          3D model: {modelCredit}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { usersCollection, ordersCollection } from "@/lib/db";
+import {
+  usersCollection,
+  ordersCollection,
+  serviceEventsCollection,
+} from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -10,7 +14,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Simple admin gate: role === admin OR ADMIN_EMAILS env list
   const adminEmails = (process.env.ADMIN_EMAILS || "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
@@ -26,9 +29,14 @@ export async function GET() {
   try {
     const users = await usersCollection();
     const orders = await ordersCollection();
+    const events = await serviceEventsCollection();
 
     const userCount = await users.countDocuments();
     const paidUsers = await users.countDocuments({ hasPaidAccess: true });
+    const verifiedUsers = await users.countDocuments({ emailVerified: true });
+    const unverifiedUsers = await users.countDocuments({
+      emailVerified: false,
+    });
 
     const completed = await orders
       .find({ status: "completed" })
@@ -38,24 +46,43 @@ export async function GET() {
 
     const pending = await orders.countDocuments({ status: "pending" });
     const failed = await orders.countDocuments({ status: "failed" });
-
     const totalRevenue = completed.reduce((sum, o) => sum + (o.amount || 0), 0);
+
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const ttsErrors24h = await events.countDocuments({
+      service: "elevenlabs",
+      level: "error",
+      createdAt: { $gte: dayAgo },
+    });
+    const ttsErrorsTotal = await events.countDocuments({
+      service: "elevenlabs",
+      level: "error",
+    });
+    const recentTtsErrors = await events
+      .find({ service: "elevenlabs", level: "error" })
+      .sort({ createdAt: -1 })
+      .limit(15)
+      .toArray();
 
     const recentUsers = await users
       .find({})
       .sort({ createdAt: -1 })
       .limit(20)
-      .project({ passwordHash: 0 })
+      .project({ passwordHash: 0, otpHash: 0 })
       .toArray();
 
     return NextResponse.json({
       stats: {
         userCount,
         paidUsers,
+        verifiedUsers,
+        unverifiedUsers,
         pendingPayments: pending,
         failedPayments: failed,
         totalRevenueKES: totalRevenue,
         confirmedPayments: completed.length,
+        ttsErrors24h,
+        ttsErrorsTotal,
       },
       recentPayments: completed.map((o) => ({
         id: (o._id as any).toString(),
@@ -71,7 +98,15 @@ export async function GET() {
         email: u.email,
         name: u.name,
         hasPaidAccess: u.hasPaidAccess,
+        emailVerified: u.emailVerified !== false,
         createdAt: u.createdAt,
+      })),
+      recentTtsErrors: recentTtsErrors.map((e) => ({
+        id: (e._id as any).toString(),
+        code: e.code,
+        message: e.message,
+        statusCode: e.statusCode,
+        createdAt: e.createdAt,
       })),
     });
   } catch (err) {

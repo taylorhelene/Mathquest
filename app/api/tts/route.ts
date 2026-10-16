@@ -1,14 +1,37 @@
 import { NextResponse } from "next/server";
+import { logServiceEvent } from "@/lib/db";
 
 export const runtime = "nodejs";
+
+async function recordFailure(
+  code: string,
+  message: string,
+  statusCode?: number,
+) {
+  await logServiceEvent({
+    service: "elevenlabs",
+    level: "error",
+    code,
+    message,
+    statusCode,
+  });
+}
 
 export async function POST(request: Request) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   const voiceId = process.env.ELEVENLABS_VOICE_ID;
 
   if (!apiKey || !voiceId) {
+    await recordFailure(
+      "not_configured",
+      "ElevenLabs is not configured on the server.",
+      503,
+    );
     return NextResponse.json(
-      { error: "ElevenLabs is not configured on the server.", code: "not_configured" },
+      {
+        error: "ElevenLabs is not configured on the server.",
+        code: "not_configured",
+      },
       { status: 503 },
     );
   }
@@ -61,27 +84,30 @@ export async function POST(request: Request) {
     }
     console.error("ElevenLabs request failed:", status, detail);
 
-    // 401 = bad key, 402 = payment / quota, 429 = rate limit
     if (status === 401) {
+      await recordFailure("unauthorized", "Invalid ElevenLabs API key", 401);
       return NextResponse.json(
-        {
-          error: "ElevenLabs API key is invalid.",
-          code: "unauthorized",
-        },
+        { error: "ElevenLabs API key is invalid.", code: "unauthorized" },
         { status: 502 },
       );
     }
     if (status === 402) {
+      await recordFailure(
+        "quota",
+        "ElevenLabs quota or billing issue (HTTP 402)",
+        402,
+      );
       return NextResponse.json(
         {
           error:
-            "ElevenLabs quota or billing issue (HTTP 402). Add credits or upgrade the plan at elevenlabs.io, or use browser voice fallback.",
+            "ElevenLabs quota or billing issue (HTTP 402). Add credits at elevenlabs.io.",
           code: "quota",
         },
         { status: 402 },
       );
     }
     if (status === 429) {
+      await recordFailure("rate_limit", "ElevenLabs rate limit", 429);
       return NextResponse.json(
         {
           error: "ElevenLabs rate limit — try again in a moment.",
@@ -91,6 +117,11 @@ export async function POST(request: Request) {
       );
     }
 
+    await recordFailure(
+      "upstream_error",
+      detail || `ElevenLabs upstream error ${status}`,
+      status,
+    );
     return NextResponse.json(
       {
         error: "Could not generate lesson audio.",
@@ -102,7 +133,6 @@ export async function POST(request: Request) {
   }
 
   const audio = await response.arrayBuffer();
-
   return new Response(audio, {
     headers: {
       "Content-Type": "audio/mpeg",

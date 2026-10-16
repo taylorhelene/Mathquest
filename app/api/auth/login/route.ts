@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { usersCollection } from "@/lib/db";
-import {
-  verifyPassword,
-  createToken,
-  setAuthCookie,
-} from "@/lib/auth";
+import { verifyPassword, createToken, setAuthCookie } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -39,14 +35,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const id = (user._id as any).toString();
-    const token = await createToken({
-      id,
-      email: user.email,
-      role: user.role || "learner",
-    });
-    await setAuthCookie(token);
+    if (user.emailVerified === false) {
+      return NextResponse.json(
+        {
+          error: "Email not verified. Enter the OTP sent to your inbox.",
+          needsVerification: true,
+          email: user.email,
+        },
+        { status: 403 },
+      );
+    }
 
+    const id = (user._id as any).toString();
     const adminEmails = (process.env.ADMIN_EMAILS || "")
       .split(",")
       .map((e: string) => e.trim().toLowerCase())
@@ -56,6 +56,13 @@ export async function POST(request: Request) {
         ? "admin"
         : user.role || "learner";
     const hasPaidAccess = Boolean(user.hasPaidAccess) || role === "admin";
+
+    const token = await createToken({
+      id,
+      email: user.email,
+      role,
+    });
+    await setAuthCookie(token);
 
     return NextResponse.json({
       user: {
