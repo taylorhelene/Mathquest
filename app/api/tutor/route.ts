@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getLesson } from "@/lib/lessons";
+import { logServiceEvent } from "@/lib/db";
 
 export const runtime = "nodejs";
 
 /**
  * Step-by-step hint generator.
- * Prefers a hosted Gemma (or any OpenAI-compatible) endpoint when
- * GEMMA_API_URL + GEMMA_API_KEY are set. Falls back to deterministic
- * pedagogical hints so the demo always works.
+ * Prefers hosted Gemma (OpenAI-compatible) when configured.
+ * Logs success/failure for the admin analytics tab.
  */
 export async function POST(request: Request) {
   try {
@@ -30,47 +30,96 @@ export async function POST(request: Request) {
 
     if (gemmaUrl && gemmaKey) {
       const prompt = buildPrompt(lesson, question, attempt, level);
-      const res = await fetch(gemmaUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${gemmaKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: process.env.GEMMA_MODEL || "gemma-2-9b-it",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a patient maths tutor for primary and lower-secondary learners. " +
-                "Give short step-by-step hints. Never reveal the final answer on the first hint. " +
-                "Use simple language. Keep replies under 80 words.",
-            },
-            { role: "user", content: prompt },
-          ],
-          max_tokens: 150,
-          temperature: 0.4,
-        }),
-      });
+      try {
+        const res = await fetch(gemmaUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${gemmaKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: process.env.GEMMA_MODEL || "gemma-2-9b-it",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a patient maths tutor for primary and lower-secondary learners. " +
+                  "Give short step-by-step hints. Never reveal the final answer on the first hint. " +
+                  "Use simple language. Keep replies under 80 words.",
+              },
+              { role: "user", content: prompt },
+            ],
+            max_tokens: 150,
+            temperature: 0.4,
+          }),
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        const text =
-          data?.choices?.[0]?.message?.content ||
-          data?.content ||
-          data?.text;
-        if (typeof text === "string" && text.trim()) {
-          return NextResponse.json({ hint: text.trim(), source: "gemma" });
+        if (res.ok) {
+          const data = await res.json();
+          const text =
+            data?.choices?.[0]?.message?.content ||
+            data?.content ||
+            data?.text;
+          if (typeof text === "string" && text.trim()) {
+            await logServiceEvent({
+              service: "gemma",
+              level: "info",
+              code: "hint_ok",
+              message: `Gemma hint level ${level} for ${lessonId}`,
+              statusCode: 200,
+            });
+            return NextResponse.json({ hint: text.trim(), source: "gemma" });
+          }
+          await logServiceEvent({
+            service: "gemma",
+            level: "warn",
+            code: "empty_response",
+            message: "Gemma returned empty content; using fallback",
+            statusCode: res.status,
+          });
+        } else {
+          let detail = "";
+          try {
+            detail = await res.text();
+          } catch {
+            /* ignore */
+          }
+          await logServiceEvent({
+            service: "gemma",
+            level: "error",
+            code: "upstream_error",
+            message: detail.slice(0, 300) || `Gemma HTTP ${res.status}`,
+            statusCode: res.status,
+          });
         }
+      } catch (err: any) {
+        await logServiceEvent({
+          service: "gemma",
+          level: "error",
+          code: "network_error",
+          message: err?.message || "Gemma network failure",
+        });
+        console.error("Gemma request failed, using fallback", err);
       }
-      console.error("Gemma request failed, using fallback");
+    } else {
+      await logServiceEvent({
+        service: "gemma",
+        level: "info",
+        code: "not_configured",
+        message: "Gemma not configured; deterministic fallback used",
+      });
     }
 
-    // Deterministic pedagogical fallback
     const hint = fallbackHint(lesson, level);
     return NextResponse.json({ hint, source: "fallback" });
   } catch (err) {
     console.error("Tutor error:", err);
+    await logServiceEvent({
+      service: "gemma",
+      level: "error",
+      code: "route_error",
+      message: "Tutor route exception",
+    });
     return NextResponse.json(
       { error: "Could not generate a hint." },
       { status: 500 },
@@ -112,7 +161,6 @@ function fallbackHint(
       `Try to apply that idea to the numbers in the question.`
     );
   }
-  // Level 3 — stronger nudge without fully spoiling if possible
   return (
     `Almost there. One of the options matches the idea we practised. ` +
     `If you eliminate the choices that clearly don’t fit the lesson, ` +
