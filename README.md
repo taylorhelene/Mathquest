@@ -40,11 +40,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Environment
 
 Copy `.env.example` → `.env.local` (local) or set the same keys on **Render**.
-
-**Required for full app:** `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAILS`  
-**Optional:** Resend (OTP email), M-Pesa, ElevenLabs, Gemma  
-
-Without optional keys the UI still runs: browser voice, built-in hints, no real STK.
+Add your keys.
 
 ---
 
